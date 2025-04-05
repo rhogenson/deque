@@ -103,7 +103,8 @@ func (q *DQ[T]) PushBack(values ...T) {
 // Grow makes space for at least n more elements to be inserted in the given
 // deque without reallocation.
 func (q *DQ[T]) Grow(n int) {
-	if cap(q.buf)-len(q.buf) >= n {
+	n -= cap(q.buf) - len(q.buf)
+	if n <= 0 {
 		return
 	}
 
