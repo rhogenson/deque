@@ -3,25 +3,25 @@
 //
 // This queue has O(1) amortized inserts and removals from both ends of the
 // container. It also has O(1) indexing like a vector.
-package vecdeque
+package deque
 
-// DQ is a double-ended queue. The zero value is ready for use.
-type DQ[T any] struct {
+// Deque is a double-ended queue. The zero value is ready for use.
+type Deque[T any] struct {
 	head int
 	buf  []T
 }
 
 // WithCapacity allocates a deque with the given capacity.
-func WithCapacity[T any](cap int) *DQ[T] {
-	return &DQ[T]{buf: make([]T, 0, cap)}
+func WithCapacity[T any](cap int) *Deque[T] {
+	return &Deque[T]{buf: make([]T, 0, cap)}
 }
 
 // From creates a new queue using the given slice as the backing buffer.
-func From[S ~[]T, T any](slice S) *DQ[T] {
-	return &DQ[T]{buf: slice}
+func From[S ~[]T, T any](slice S) *Deque[T] {
+	return &Deque[T]{buf: slice}
 }
 
-func (q *DQ[T]) wrapAdd(i, addend int) int {
+func (q *Deque[T]) wrapAdd(i, addend int) int {
 	i += addend
 	if i >= cap(q.buf) {
 		return i - cap(q.buf)
@@ -29,27 +29,27 @@ func (q *DQ[T]) wrapAdd(i, addend int) int {
 	return i
 }
 
-func (q *DQ[T]) toPhysicalIdx(i int) int {
+func (q *Deque[T]) toPhysicalIdx(i int) int {
 	return q.wrapAdd(q.head, i)
 }
 
-// Get returns the item at position i.
-func (q *DQ[T]) Get(i int) T {
+// At returns the item at position i.
+func (q *Deque[T]) At(i int) T {
 	return q.buf[:cap(q.buf)][q.toPhysicalIdx(i)]
 }
 
 // Cap returns the number of elements the deque can hold without reallocating.
-func (q *DQ[T]) Cap() int {
+func (q *Deque[T]) Cap() int {
 	return cap(q.buf)
 }
 
 // Len returns the number of elements in the deque.
-func (q *DQ[T]) Len() int {
+func (q *Deque[T]) Len() int {
 	return len(q.buf)
 }
 
 // PopFront removes and returns the item at index 0 if the deque is non-empty.
-func (q *DQ[T]) PopFront() (T, bool) {
+func (q *Deque[T]) PopFront() (T, bool) {
 	if len(q.buf) == 0 {
 		var zero T
 		return zero, false
@@ -61,17 +61,17 @@ func (q *DQ[T]) PopFront() (T, bool) {
 }
 
 // PopBack removes and returns the last item in the deque if it is non-empty.
-func (q *DQ[T]) PopBack() (T, bool) {
+func (q *Deque[T]) PopBack() (T, bool) {
 	if len(q.buf) == 0 {
 		var zero T
 		return zero, false
 	}
 	q.buf = q.buf[:len(q.buf)-1]
-	return q.Get(len(q.buf)), true
+	return q.At(len(q.buf)), true
 }
 
 // PushFront prepends the given items to the front of the deque.
-func (q *DQ[T]) PushFront(values ...T) {
+func (q *Deque[T]) PushFront(values ...T) {
 	q.Grow(len(values))
 	q.buf = q.buf[:len(q.buf)+len(values)]
 	if q.head >= len(values) {
@@ -87,7 +87,7 @@ func (q *DQ[T]) PushFront(values ...T) {
 }
 
 // PushBack appends the given items to the back of the deque.
-func (q *DQ[T]) PushBack(values ...T) {
+func (q *Deque[T]) PushBack(values ...T) {
 	q.Grow(len(values))
 	endIdx := q.wrapAdd(q.head, len(q.buf))
 	if len(values) < cap(q.buf)-endIdx {
@@ -102,14 +102,14 @@ func (q *DQ[T]) PushBack(values ...T) {
 
 // Reset empties the deque, retaining the underlying storage for use by
 // future pushes.
-func (q *DQ[T]) Reset() {
+func (q *Deque[T]) Reset() {
 	q.buf = q.buf[:0]
 }
 
 // AvailableBuffer returns an empty slice with q.Cap()-q.Len() capacity. This
 // slice is intended to be appended to and passed to an immediately succeeding
-// DQ.PushBack call. The slice is only valid until the next push operation on q.
-func (q *DQ[T]) AvailableBuffer() []T {
+// Deque.PushBack call. The slice is only valid until the next push operation on q.
+func (q *Deque[T]) AvailableBuffer() []T {
 	endIdx := q.toPhysicalIdx(len(q.buf))
 	if endIdx <= q.head {
 		return q.buf[endIdx:endIdx:q.head]
@@ -119,7 +119,7 @@ func (q *DQ[T]) AvailableBuffer() []T {
 
 // Grow makes space for at least n more elements to be inserted in the given
 // deque without reallocation.
-func (q *DQ[T]) Grow(n int) {
+func (q *Deque[T]) Grow(n int) {
 	n -= cap(q.buf) - len(q.buf)
 	if n <= 0 {
 		return
@@ -166,10 +166,10 @@ func (q *DQ[T]) Grow(n int) {
 
 // All returns an iterator over the elements in the deque. It does not pop
 // any elements.
-func (q *DQ[T]) All() func(func(int, T) bool) {
+func (q *Deque[T]) All() func(func(int, T) bool) {
 	return func(yield func(int, T) bool) {
 		for i := range len(q.buf) {
-			if !yield(i, q.Get(i)) {
+			if !yield(i, q.At(i)) {
 				return
 			}
 		}
@@ -178,7 +178,7 @@ func (q *DQ[T]) All() func(func(int, T) bool) {
 
 // PopAll empties the deque and returns an iterator over the popped elements.
 // It's not safe to modify the deque while iterating using PopAll.
-func (q *DQ[T]) PopAll() func(func(T) bool) {
+func (q *Deque[T]) PopAll() func(func(T) bool) {
 	n := len(q.buf)
 	q.buf = q.buf[:0]
 	return func(yield func(T) bool) {

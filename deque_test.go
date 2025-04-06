@@ -1,4 +1,4 @@
-package vecdeque
+package deque
 
 import (
 	"bytes"
@@ -20,16 +20,16 @@ func TestWithCapacity(t *testing.T) {
 	}
 }
 
-func TestGet(t *testing.T) {
+func TestAt(t *testing.T) {
 	t.Parallel()
 
-	q := new(DQ[int])
+	q := new(Deque[int])
 	for i := range 10 {
 		q.PushBack(i)
 	}
 	for i := range 3 {
-		if got := q.Get(i); got != i {
-			t.Errorf("Get(%d) = %d, want %d", i, got, i)
+		if got := q.At(i); got != i {
+			t.Errorf("At(%d) = %d, want %d", i, got, i)
 		}
 	}
 }
