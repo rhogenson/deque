@@ -100,6 +100,23 @@ func (q *DQ[T]) PushBack(values ...T) {
 	q.buf = q.buf[:len(q.buf)+len(values)]
 }
 
+// Reset empties the deque, retaining the underlying storage for use by
+// future pushes.
+func (q *DQ[T]) Reset() {
+	q.buf = q.buf[:0]
+}
+
+// AvailableBuffer returns an empty slice with q.Cap()-q.Len() capacity. This
+// slice is intended to be appended to and passed to an immediately succeeding
+// DQ.PushBack call. The slice is only valid until the next push operation on q.
+func (q *DQ[T]) AvailableBuffer() []T {
+	endIdx := q.toPhysicalIdx(len(q.buf))
+	if endIdx <= q.head {
+		return q.buf[endIdx:endIdx:q.head]
+	}
+	return q.buf[endIdx:endIdx]
+}
+
 // Grow makes space for at least n more elements to be inserted in the given
 // deque without reallocation.
 func (q *DQ[T]) Grow(n int) {
@@ -151,7 +168,7 @@ func (q *DQ[T]) Grow(n int) {
 // any elements.
 func (q *DQ[T]) All() func(func(int, T) bool) {
 	return func(yield func(int, T) bool) {
-		for i := range q.Len() {
+		for i := range len(q.buf) {
 			if !yield(i, q.Get(i)) {
 				return
 			}
@@ -159,13 +176,20 @@ func (q *DQ[T]) All() func(func(int, T) bool) {
 	}
 }
 
-// PopAll returns an iterator that consumes all the values in the deque, leaving
-// it empty.
+// PopAll empties the deque and returns an iterator over the popped elements.
+// It's not safe to modify the deque while iterating using PopAll.
 func (q *DQ[T]) PopAll() func(func(T) bool) {
+	n := len(q.buf)
+	q.buf = q.buf[:0]
 	return func(yield func(T) bool) {
-		for val, ok := q.PopFront(); ok; val, ok = q.PopFront() {
-			if !yield(val) {
+		endIdx := q.toPhysicalIdx(n)
+		for i := q.head; ; {
+			if !yield(q.buf[:cap(q.buf)][i]) {
 				return
+			}
+			i = q.wrapAdd(i, 1)
+			if i == endIdx {
+				break
 			}
 		}
 	}

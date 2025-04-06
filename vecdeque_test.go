@@ -1,6 +1,8 @@
 package vecdeque
 
 import (
+	"bytes"
+	"fmt"
 	"slices"
 	"testing"
 )
@@ -242,7 +244,22 @@ func TestPopFrontPushFront(t *testing.T) {
 	}
 }
 
+func TestReset(t *testing.T) {
+	t.Parallel()
+
+	q := From([]int{1, 2, 3, 4, 5})
+	q.Reset()
+	if got, want := q.Len(), 0; got != want {
+		t.Errorf("After Reset() Len() = %d, want %d", got, want)
+	}
+	if got, want := q.Cap(), 5; got != want {
+		t.Errorf("After Reset() Cap() = %d, want %d", got, want)
+	}
+}
+
 func TestPopAll(t *testing.T) {
+	t.Parallel()
+
 	q := From([]int{1, 2, 3})
 	got := make([]int, 0, q.Len())
 	for x := range q.PopAll() {
@@ -254,5 +271,29 @@ func TestPopAll(t *testing.T) {
 	want := []int{1, 2, 3}
 	if !slices.Equal(got, want) {
 		t.Errorf("PopAll() returned values %d, want %d", got, want)
+	}
+}
+
+func TestAvailableBuffer(t *testing.T) {
+	t.Parallel()
+
+	const cap = 10
+	q := WithCapacity[byte](cap)
+	q.PushBack(append(q.AvailableBuffer(), []byte("     ")...)...)
+	q.PushBack(fmt.Appendf(q.AvailableBuffer(), "%d", 12345)...)
+	for range 5 {
+		q.PopFront()
+	}
+	q.PushBack(fmt.Appendf(q.AvailableBuffer(), "%d", 67890)...)
+	if got, want := q.Cap(), cap; got != want {
+		t.Errorf("Cap() = %d, want %d", got, want)
+	}
+	got := make([]byte, q.Len())
+	for i, x := range q.All() {
+		got[i] = x
+	}
+	want := []byte("1234567890")
+	if !bytes.Equal(got, want) {
+		t.Errorf("Incorrect content after appending to AvailableBuffer, got %d want %d", got, want)
 	}
 }
