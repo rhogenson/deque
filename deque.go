@@ -5,6 +5,14 @@
 // container. It also has O(1) indexing like a vector.
 package deque
 
+// The core implementation is "ported" (stolen) from Rust's VecDeque.
+
+import (
+	"fmt"
+	"iter"
+	"slices"
+)
+
 // Deque is a double-ended queue. The zero value is ready for use.
 type Deque[T any] struct {
 	head int
@@ -35,6 +43,9 @@ func (q *Deque[T]) toPhysicalIdx(i int) int {
 
 // At returns the item at position i.
 func (q *Deque[T]) At(i int) T {
+	if !(0 <= i && i < len(q.buf)) {
+		panic(fmt.Sprintf("index out of range [%d] with length %d", i, len(q.buf)))
+	}
 	return q.buf[:cap(q.buf)][q.toPhysicalIdx(i)]
 }
 
@@ -67,7 +78,7 @@ func (q *Deque[T]) PopBack() (T, bool) {
 		return zero, false
 	}
 	q.buf = q.buf[:len(q.buf)-1]
-	return q.At(len(q.buf)), true
+	return q.buf[:cap(q.buf)][q.toPhysicalIdx(len(q.buf))], true
 }
 
 // PushFront prepends the given items to the front of the deque.
@@ -109,13 +120,12 @@ func (q *Deque[T]) Reset() {
 // Grow makes space for at least n more elements to be inserted in the given
 // deque without reallocation.
 func (q *Deque[T]) Grow(n int) {
-	n -= cap(q.buf) - len(q.buf)
-	if n <= 0 {
+	if n <= cap(q.buf)-len(q.buf) {
 		return
 	}
 
 	oldCap := cap(q.buf)
-	q.buf = append(q.buf[:cap(q.buf)], make([]T, n)...)[:len(q.buf)]
+	q.buf = slices.Grow(q.buf, n)
 	newCap := cap(q.buf)
 
 	// Move the shortest contiguous section of the ring buffer
@@ -155,10 +165,12 @@ func (q *Deque[T]) Grow(n int) {
 
 // All returns an iterator over the elements in the deque. It does not pop
 // any elements.
-func (q *Deque[T]) All() func(func(int, T) bool) {
+func (q *Deque[T]) All() iter.Seq2[int, T] {
 	return func(yield func(int, T) bool) {
-		for i := range len(q.buf) {
-			if !yield(i, q.At(i)) {
+		// Don't use range over int in case the length changes while
+		// we're iterating
+		for i := 0; i < len(q.buf); i++ {
+			if !yield(i, q.buf[:cap(q.buf)][q.toPhysicalIdx(i)]) {
 				return
 			}
 		}
@@ -167,7 +179,7 @@ func (q *Deque[T]) All() func(func(int, T) bool) {
 
 // PopAll empties the deque and returns an iterator over the popped elements.
 // It's not safe to modify the deque while iterating using PopAll.
-func (q *Deque[T]) PopAll() func(func(T) bool) {
+func (q *Deque[T]) PopAll() iter.Seq[T] {
 	n := len(q.buf)
 	q.buf = q.buf[:0]
 	return func(yield func(T) bool) {
