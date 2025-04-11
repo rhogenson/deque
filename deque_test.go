@@ -1,8 +1,6 @@
 package deque
 
 import (
-	"bytes"
-	"fmt"
 	"slices"
 	"testing"
 )
@@ -285,29 +283,5 @@ func TestPopAll(t *testing.T) {
 				t.Errorf("PopAll() returned values %d, want %d", got, tc.content)
 			}
 		})
-	}
-}
-
-func TestAvailableBuffer(t *testing.T) {
-	t.Parallel()
-
-	const cap = 10
-	q := WithCapacity[byte](cap)
-	q.PushBack(append(q.AvailableBuffer(), []byte("     ")...)...)
-	q.PushBack(fmt.Appendf(q.AvailableBuffer(), "%d", 12345)...)
-	for range 5 {
-		q.PopFront()
-	}
-	q.PushBack(fmt.Appendf(q.AvailableBuffer(), "%d", 67890)...)
-	if got, want := q.Cap(), cap; got != want {
-		t.Errorf("Cap() = %d, want %d", got, want)
-	}
-	got := make([]byte, q.Len())
-	for i, x := range q.All() {
-		got[i] = x
-	}
-	want := []byte("1234567890")
-	if !bytes.Equal(got, want) {
-		t.Errorf("Incorrect content after appending to AvailableBuffer, got %d want %d", got, want)
 	}
 }

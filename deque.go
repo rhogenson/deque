@@ -106,17 +106,6 @@ func (q *Deque[T]) Reset() {
 	q.buf = q.buf[:0]
 }
 
-// AvailableBuffer returns an empty slice with q.Cap()-q.Len() capacity. This
-// slice is intended to be appended to and passed to an immediately succeeding
-// Deque.PushBack call. The slice is only valid until the next push operation on q.
-func (q *Deque[T]) AvailableBuffer() []T {
-	endIdx := q.toPhysicalIdx(len(q.buf))
-	if endIdx <= q.head {
-		return q.buf[endIdx:endIdx:q.head]
-	}
-	return q.buf[endIdx:endIdx]
-}
-
 // Grow makes space for at least n more elements to be inserted in the given
 // deque without reallocation.
 func (q *Deque[T]) Grow(n int) {
