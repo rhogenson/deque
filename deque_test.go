@@ -260,17 +260,31 @@ func TestReset(t *testing.T) {
 func TestPopAll(t *testing.T) {
 	t.Parallel()
 
-	q := From([]int{1, 2, 3})
-	got := make([]int, 0, q.Len())
-	for x := range q.PopAll() {
-		got = append(got, x)
-	}
-	if got, want := q.Len(), 0; got != want {
-		t.Errorf("Len() = %d, want %d", got, want)
-	}
-	want := []int{1, 2, 3}
-	if !slices.Equal(got, want) {
-		t.Errorf("PopAll() returned values %d, want %d", got, want)
+	for _, tc := range []struct {
+		desc    string
+		content []int
+	}{{
+		desc:    "PopAll",
+		content: []int{1, 2, 3},
+	}, {
+		desc:    "PopAllEmpty",
+		content: make([]int, 0, 3),
+	}} {
+		t.Run(tc.desc, func(t *testing.T) {
+			t.Parallel()
+
+			q := From(tc.content)
+			got := make([]int, 0, q.Len())
+			for x := range q.PopAll() {
+				got = append(got, x)
+			}
+			if got, want := q.Len(), 0; got != want {
+				t.Errorf("Len() = %d, want %d", got, want)
+			}
+			if !slices.Equal(got, tc.content) {
+				t.Errorf("PopAll() returned values %d, want %d", got, tc.content)
+			}
+		})
 	}
 }
 

@@ -182,14 +182,9 @@ func (q *Deque[T]) PopAll() func(func(T) bool) {
 	n := len(q.buf)
 	q.buf = q.buf[:0]
 	return func(yield func(T) bool) {
-		endIdx := q.toPhysicalIdx(n)
-		for i := q.head; ; {
-			if !yield(q.buf[:cap(q.buf)][i]) {
+		for i := range n {
+			if !yield(q.buf[:cap(q.buf)][q.toPhysicalIdx(i)]) {
 				return
-			}
-			i = q.wrapAdd(i, 1)
-			if i == endIdx {
-				break
 			}
 		}
 	}
