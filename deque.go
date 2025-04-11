@@ -1,4 +1,4 @@
-// Package vecdeque implements a double-ended queue (deque) implemented with a
+// Package deque implements a double-ended queue (deque) implemented with a
 // growable ring buffer.
 //
 // This queue has O(1) amortized inserts and removals from both ends of the
