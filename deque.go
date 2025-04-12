@@ -3,9 +3,9 @@
 //
 // This queue has O(1) amortized inserts and removals from both ends of the
 // container. It also has O(1) indexing like a vector.
-package deque
-
+//
 // The core implementation is "ported" (stolen) from Rust's VecDeque.
+package deque
 
 import (
 	"fmt"
@@ -42,7 +42,7 @@ func (q *Deque[T]) toPhysicalIdx(i int) int {
 	return q.wrapAdd(q.head, i)
 }
 
-// At returns the item at position i.
+// At returns the item at position i. At panics if i < 0 or i >= q.Len().
 func (q *Deque[T]) At(i int) T {
 	if !(0 <= i && i < len(q.buf)) {
 		panic(fmt.Sprintf("index out of range [%d] with length %d", i, len(q.buf)))
