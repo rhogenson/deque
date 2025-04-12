@@ -285,3 +285,15 @@ func TestPopAll(t *testing.T) {
 		})
 	}
 }
+
+func TestString(t *testing.T) {
+	t.Parallel()
+
+	in := []int{1, 2, 3, 4, 5}
+	q := From(in)
+	const want = "[1 2 3 4 5]"
+	got := q.String()
+	if got != want {
+		t.Errorf("%d: String() = %q, want %q", in, got, want)
+	}
+}

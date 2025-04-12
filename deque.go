@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"iter"
 	"slices"
+	"strings"
 )
 
 // Deque is a double-ended queue. The zero value is ready for use.
@@ -189,4 +190,18 @@ func (q *Deque[T]) PopAll() iter.Seq[T] {
 			}
 		}
 	}
+}
+
+// String displays the deque as a string, using fmt.Sprint to show each element.
+func (q *Deque[T]) String() string {
+	buf := new(strings.Builder)
+	buf.WriteString("[")
+	for i := range len(q.buf) {
+		if i > 0 {
+			buf.WriteString(" ")
+		}
+		fmt.Fprint(buf, q.buf[:cap(q.buf)][q.toPhysicalIdx(i)])
+	}
+	buf.WriteString("]")
+	return buf.String()
 }
