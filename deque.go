@@ -102,7 +102,7 @@ func (q *Deque[T]) PushFront(values ...T) {
 func (q *Deque[T]) PushBack(values ...T) {
 	q.Grow(len(values))
 	endIdx := q.wrapAdd(q.head, len(q.buf))
-	if len(values) < cap(q.buf)-endIdx {
+	if len(values) <= cap(q.buf)-endIdx {
 		copy(q.buf[endIdx:endIdx+len(values)], values)
 	} else {
 		headLen := cap(q.buf) - endIdx
