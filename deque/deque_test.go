@@ -1,6 +1,7 @@
 package deque
 
 import (
+	"cmp"
 	"slices"
 	"testing"
 )
@@ -295,5 +296,41 @@ func TestString(t *testing.T) {
 	got := q.String()
 	if got != want {
 		t.Errorf("%d: String() = %q, want %q", in, got, want)
+	}
+}
+
+const n = 10000
+
+func BenchmarkSort1(b *testing.B) {
+	q := WithCapacity[int](n)
+	for i := range n {
+		q.PushBack(n - i)
+	}
+	for range n / 2 {
+		q.PopFront()
+	}
+	for i := range n/2 - 500 {
+		q.PushBack(i)
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		q.Sort1(cmp.Compare[int])
+	}
+}
+
+func BenchmarkSort2(b *testing.B) {
+	q := WithCapacity[int](n)
+	for i := range n {
+		q.PushBack(n - i)
+	}
+	for range n / 2 {
+		q.PopFront()
+	}
+	for i := range n/2 - 500 {
+		q.PushBack(i)
+	}
+	b.ResetTimer()
+	for b.Loop() {
+		q.Sort2(cmp.Compare[int])
 	}
 }

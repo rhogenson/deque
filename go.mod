@@ -1,3 +1,3 @@
-module gitlab.com/rhogenson/deque
+module github.com/rhogenson/container
 
 go 1.24.1
