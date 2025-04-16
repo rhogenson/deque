@@ -3,7 +3,7 @@ package deque_test
 import (
 	"fmt"
 
-	"github.com/rhogenson/container/deque"
+	"github.com/rhogenson/deque"
 )
 
 func ExampleDeque() {
